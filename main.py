@@ -1,4 +1,6 @@
 import logging
+import httpx
+from telegram.ext import Application
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ConversationHandler, ContextTypes, JobQueue, Job
 import os
@@ -274,20 +276,30 @@ async def check_subscriptions(context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"خطأ في إرسال الرسالة إلى المستخدم {user_id}: {e}")
 
-def main():
-    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").build()
-    job_queue = application.job_queue
-    job_queue.run_repeating(check_subscriptions, interval=timedelta(minutes=1442), first=timedelta(seconds=10))
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
-        states={
-            SUBSCRIBE: [CallbackQueryHandler(button)],
-            CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, activate_subscription)],
-        },
-        fallbacks=[CommandHandler('start', start)],
-    )
-    application.add_handler(conv_handler)
+# Create a custom HTTPX client with increased timeout and retry mechanism
+class CustomHTTPXClient(httpx.AsyncClient):
+    async def request(self, *args, **kwargs):
+        retries = 3
+        for attempt in range(retries):
+            try:
+                response = await super().request(*args, **kwargs)
+                response.raise_for_status()
+                return response
+            except httpx.RequestError as e:
+                if attempt < retries - 1:
+                    continue
+                raise e
+
+# Use the custom HTTPX client in the Telegram application
+async def main():
+    custom_client = CustomHTTPXClient(timeout=httpx.Timeout(10.0, connect=5.0))
+    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").httpx_client(custom_client).build()
+    
+    # Add handlers and job queue as before
+    # ...
+
     application.run_polling()
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
