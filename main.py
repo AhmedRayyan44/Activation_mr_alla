@@ -1,5 +1,7 @@
 import logging
 import httpx
+from telegram import Application
+
 from telegram.ext import Application
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ConversationHandler, ContextTypes, JobQueue, Job
@@ -293,7 +295,8 @@ class CustomHTTPXClient(httpx.AsyncClient):
 # Use the custom HTTPX client in the Telegram application
 async def main():
     custom_client = CustomHTTPXClient(timeout=httpx.Timeout(10.0, connect=5.0))
-    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").httpx_client(custom_client).build()
+    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").http_client(custom_client).build()
+
     
     # Add handlers and job queue as before
     # ...
