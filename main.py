@@ -6,6 +6,7 @@ from telegram.ext import (
 import os
 from threading import Lock
 from datetime import datetime, timedelta
+import httpx
 
 # Enable logging
 logging.basicConfig(
@@ -269,17 +270,22 @@ async def check_subscriptions(context: ContextTypes.DEFAULT_TYPE):
             logger.error(f"خطأ في إرسال الرسالة إلى المستخدم {user_id}: {e}")
 
 def main():
-    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").build()
+    # Increase timeout and add retry mechanism
+    client = httpx.AsyncClient(timeout=httpx.Timeout(30.0, connect=20.0), retries=3)
+    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").httpx_client(client).build()
+    
     job_queue = application.job_queue
     job_queue.run_repeating(check_subscriptions, interval=timedelta(minutes=1442), first=timedelta(seconds=10))
+    
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            SUBSCRIBE: [CallbackQueryHandler(button)],
+            SUBSCRIBE: [CallbackQueryHandler(button, per_message=True)],
             CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, activate_subscription)],
         },
         fallbacks=[CommandHandler('start', start)],
     )
+    
     application.add_handler(conv_handler)
     application.run_polling()
 
