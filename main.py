@@ -1,35 +1,31 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ConversationHandler, ContextTypes, JobQueue, Job
+from telegram.ext import (
+    Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ConversationHandler, ContextTypes, JobQueue, Job
+)
 import os
 from threading import Lock
 from datetime import datetime, timedelta
 
-# تفعيل التسجيل
+# Enable logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(الlevelname)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# تعريف الحالات
+# Define states
 SUBSCRIBE, CODE = range(2)
 
-# أسماء الملفات لمفاتيح الاشتراك
+# File names for subscription keys
 lifetime_file = 'lifetime_keys.txt'
 one_day_file = 'one_day_keys.txt'
-
-
 REDIRECT_LINK = "https://dez-store.com"
-
 CHANNEL_CHAT_ID = "-1002177577143"  # Replace with your private channel chat ID
 USER_SECRET_FILE = 'user_secret.txt'
 CHANNEL_URL = "https://t.me/+0rjSjDFuWHgwZWE8"  # Replace with your actual channel URL
 TRIAL_CHANNEL_URL = "https://t.me/+tU5HVwK-ZegxZDVk"  # Replace with your trial channel URL
 ADMIN_URL = "http://t.me/IT_Support2"  # Replace with your actual admin URL
-
-
-
 
 file_lock = Lock()
 
@@ -113,7 +109,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     user = update.effective_user
-
     if query.data == 'subscribe':
         keyboard = [
             [InlineKeyboardButton("العودة إلى القائمة الرئيسية", callback_data='main_menu')]
@@ -153,7 +148,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 f"👤 المستخدم: {subscription_info[1]}\n"
                 f"📅 نوع الاشتراك: {subscription_info[3]}\n"
                 f"🔑 الرمز: {subscription_info[2]}\n"
-
                 f"📅 تاريخ الاشتراك: {subscription_info[4]}"
             )
         else:
