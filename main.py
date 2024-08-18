@@ -1,32 +1,35 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ConversationHandler, ContextTypes, JobQueue, Job
-)
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ConversationHandler, ContextTypes, JobQueue, Job
 import os
 from threading import Lock
 from datetime import datetime, timedelta
-import httpx
 
-# Enable logging
+# تفعيل التسجيل
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(الlevelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Define states
+# تعريف الحالات
 SUBSCRIBE, CODE = range(2)
 
-# File names for subscription keys
+# أسماء الملفات لمفاتيح الاشتراك
 lifetime_file = 'lifetime_keys.txt'
 one_day_file = 'one_day_keys.txt'
+
+
 REDIRECT_LINK = "https://dez-store.com"
+
 CHANNEL_CHAT_ID = "-1002177577143"  # Replace with your private channel chat ID
 USER_SECRET_FILE = 'user_secret.txt'
 CHANNEL_URL = "https://t.me/+0rjSjDFuWHgwZWE8"  # Replace with your actual channel URL
 TRIAL_CHANNEL_URL = "https://t.me/+tU5HVwK-ZegxZDVk"  # Replace with your trial channel URL
 ADMIN_URL = "http://t.me/IT_Support2"  # Replace with your actual admin URL
+
+
+
 
 file_lock = Lock()
 
@@ -110,6 +113,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     user = update.effective_user
+
     if query.data == 'subscribe':
         keyboard = [
             [InlineKeyboardButton("العودة إلى القائمة الرئيسية", callback_data='main_menu')]
@@ -149,6 +153,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 f"👤 المستخدم: {subscription_info[1]}\n"
                 f"📅 نوع الاشتراك: {subscription_info[3]}\n"
                 f"🔑 الرمز: {subscription_info[2]}\n"
+
                 f"📅 تاريخ الاشتراك: {subscription_info[4]}"
             )
         else:
@@ -270,22 +275,17 @@ async def check_subscriptions(context: ContextTypes.DEFAULT_TYPE):
             logger.error(f"خطأ في إرسال الرسالة إلى المستخدم {user_id}: {e}")
 
 def main():
-    # Increase timeout and add retry mechanism
-    client = httpx.AsyncClient(timeout=httpx.Timeout(30.0, connect=20.0), retries=3)
-    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").httpx_client(client).build()
-    
+    application = Application.builder().token("7384470413:AAHJ5LNo7MlMV_qo83TiJtYEowfA7m7uZ2g").build()
     job_queue = application.job_queue
     job_queue.run_repeating(check_subscriptions, interval=timedelta(minutes=1442), first=timedelta(seconds=10))
-    
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            SUBSCRIBE: [CallbackQueryHandler(button, per_message=True)],
+            SUBSCRIBE: [CallbackQueryHandler(button)],
             CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, activate_subscription)],
         },
         fallbacks=[CommandHandler('start', start)],
     )
-    
     application.add_handler(conv_handler)
     application.run_polling()
 
